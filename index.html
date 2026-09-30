@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Картотека &mdash; английски речник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE6D3;
+    --paper-deep:#E4D8BC;
+    --paper-shadow:#CBBC97;
+    --ink:#1F2A38;
+    --ink-soft:#4A5568;
+    --brass:#9C7A2E;
+    --brass-light:#BFA05A;
+    --green:#3F6B4B;
+    --red:#A8402C;
+    --card-w:min(94vw, 480px);
+    --word-size: clamp(19px, 6vw, 27px);
+    font-size: clamp(14px, 3.6vw, 17px);
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at top, #F6F0DF 0%, var(--paper-deep) 55%, var(--paper-shadow) 100%);
+    font-family:'PT Serif', serif;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:clamp(14px,4vw,32px) clamp(10px,4vw,16px);
+    position:relative;
+    overflow-x:hidden;
+    font-size:1rem;
+  }
+  /* faint wood-drawer texture lines */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image: repeating-linear-gradient(180deg, rgba(31,42,56,0.025) 0px, rgba(31,42,56,0.025) 1px, transparent 1px, transparent 26px);
+    pointer-events:none;
+  }
+
+  .stage{
+    width:var(--card-w);
+    max-width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:clamp(12px,3vw,18px);
+  }
+
+  .masthead{
+    text-align:center;
+    margin-bottom:2px;
+  }
+  .masthead .eyebrow{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10px,2.6vw,11px);
+    letter-spacing:.24em;
+    text-transform:uppercase;
+    color:var(--brass);
+    font-weight:600;
+  }
+  .masthead h1{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:clamp(22px,6.4vw,34px);
+    margin:2px 0 0;
+    letter-spacing:.01em;
+  }
+  .floral-divider{
+    width:min(210px, 70vw);
+    height:22px;
+    color:var(--brass-light);
+    opacity:.6;
+    margin:8px auto 0;
+    display:block;
+  }
+
+  .dir-toggle{
+    display:flex;
+    background:var(--paper-deep);
+    border:1.5px solid var(--paper-shadow);
+    border-radius:999px;
+    padding:4px;
+    gap:4px;
+  }
+  .dir-toggle.wrap{
+    flex-wrap:wrap;
+    justify-content:center;
+    border-radius:18px;
+  }
+  .dir-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10.5px,2.8vw,12px);
+    font-weight:600;
+    letter-spacing:.03em;
+    color:var(--ink-soft);
+    background:transparent;
+    border:none;
+    border-radius:999px;
+    padding:8px 14px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    white-space:nowrap;
+  }
+  .dir-btn:hover{ color:var(--ink); }
+  .dir-btn:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+  }
+  .dir-btn:disabled:hover{ color:var(--ink-soft); }
+  .dir-btn.active{
+    background:var(--brass);
+    color:#FBF6E9;
+  }
+
+  .data-toolbar{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .data-toolbar .btn-secondary{
+    font-size:clamp(10.5px,2.8vw,12px);
+    padding:8px 12px;
+    cursor:pointer;
+  }
+  .data-status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10px,2.6vw,11px);
+    color:var(--ink-soft);
+    text-align:center;
+    min-height:14px;
+  }
+
+  .mistake-bar{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  #mistake-count{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10.5px,2.8vw,12px);
+    color:var(--ink-soft);
+  }
+  #review-btn{
+    font-size:clamp(10.5px,2.8vw,12px);
+    padding:8px 12px;
+  }
+  .btn:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+  }
+  .btn.pulse{
+    border-color:var(--brass);
+    color:var(--brass);
+    animation:pulseGlow 1.5s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{ box-shadow:0 0 0 0 rgba(156,122,46,0.35); }
+    50%{ box-shadow:0 0 0 7px rgba(156,122,46,0); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .btn.pulse{ animation:none; }
+  }
+
+  /* ===== the index card ===== */
+  .card-wrap{
+    position:relative;
+    width:100%;
+    perspective:1200px;
+  }
+  .tab{
+    position:absolute;
+    top:-16px;
+    left:clamp(14px,6vw,28px);
+    background:var(--brass);
+    color:#2A2013;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10.5px,2.8vw,12px);
+    font-weight:600;
+    letter-spacing:.05em;
+    padding:6px 14px 8px;
+    border-radius:5px 5px 0 0;
+    box-shadow:0 -2px 0 rgba(0,0,0,0.08) inset;
+    z-index:2;
+  }
+  .card{
+    position:relative;
+    background:
+      linear-gradient(180deg, #FBF6E9 0%, var(--paper) 100%);
+    border:1px solid #C9B98C;
+    border-radius:6px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 18px 30px -14px rgba(31,20,10,0.35),
+      0 2px 0 var(--paper-shadow);
+    padding:clamp(22px,6vw,34px) clamp(16px,5vw,26px) clamp(18px,4vw,26px);
+    min-height:270px;
+    display:flex;
+    flex-direction:column;
+    gap:clamp(14px,3vw,18px);
+  }
+  .card::after{
+    /* punch holes, card-catalog style */
+    content:"";
+    position:absolute;
+    left:50%; top:0;
+    transform:translate(-50%,-50%);
+    width:14px; height:14px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 35%, #fff, #cfc2a0 60%, #b8a878 100%);
+    box-shadow: 0 0 0 1px #C9B98C;
+  }
+
+  .floral-corner{
+    position:absolute;
+    width:clamp(38px, 11vw, 52px);
+    height:clamp(38px, 11vw, 52px);
+    color:var(--brass-light);
+    opacity:.38;
+    pointer-events:none;
+    z-index:0;
+  }
+  .floral-corner-tl{ top:6px; left:6px; }
+  .floral-corner-br{ bottom:6px; right:6px; transform:rotate(180deg); }
+  .card > :not(.floral-corner){
+    position:relative;
+    z-index:1;
+  }
+
+  .progress-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10.5px,2.6vw,12px);
+    color:var(--ink-soft);
+  }
+  .progress-track{
+    flex:1;
+    height:3px;
+    background:var(--paper-shadow);
+    margin:0 12px;
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--brass);
+    width:0%;
+    transition:width .35s ease;
+  }
+
+  .meaning-block{
+    text-align:center;
+    padding:6px 0 2px;
+  }
+  .meaning-row{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .meaning-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(9.5px,2.4vw,10.5px);
+    letter-spacing:.2em;
+    text-transform:uppercase;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+  .meaning{
+    font-family:'PT Serif', serif;
+    font-weight:700;
+    font-style:italic;
+    font-size:var(--word-size);
+    line-height:1.35;
+  }
+  .meaning .extra{
+    display:block;
+    font-family:'PT Serif', serif;
+    font-style:normal;
+    font-weight:400;
+    font-size:clamp(13px,3.4vw,15px);
+    color:var(--ink-soft);
+    margin-top:8px;
+  }
+
+  .answer-zone{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .input-row{
+    display:flex;
+    gap:8px;
+    align-items:stretch;
+    flex-wrap:wrap;
+  }
+  input#answer{
+    flex:1 1 140px;
+    min-width:0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(15px,4vw,17px);
+    padding:clamp(10px,3vw,12px) 14px;
+    border:1.5px solid #B7A87C;
+    border-radius:4px;
+    background:#FBF8EF;
+    color:var(--ink);
+    outline:none;
+    letter-spacing:.02em;
+  }
+  input#answer:focus{
+    border-color:var(--brass);
+    box-shadow:0 0 0 3px rgba(156,122,46,0.15);
+  }
+  input#answer::placeholder{ color:#9C9578; }
+
+  input#answer.input-error{
+    border-color:var(--red);
+    background:#F7ECE4;
+    animation:inputShake .3s ease;
+  }
+  @keyframes inputShake{
+    0%,100%{ transform:translateX(0); }
+    20%{ transform:translateX(-5px); }
+    40%{ transform:translateX(5px); }
+    60%{ transform:translateX(-3px); }
+    80%{ transform:translateX(3px); }
+  }
+
+  .btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(12px,3.2vw,13px);
+    font-weight:600;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    border:none;
+    border-radius:4px;
+    cursor:pointer;
+    padding:0 16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    transition:transform .12s ease, filter .12s ease;
+    white-space:nowrap;
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn-check{
+    background:var(--ink);
+    color:var(--paper);
+  }
+  .btn-check:hover{ filter:brightness(1.15); }
+  .btn-secondary{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1.5px solid var(--paper-shadow);
+    font-size:clamp(11px,3vw,12px);
+    padding:9px 14px;
+  }
+  .btn-secondary:hover{ border-color:var(--brass); color:var(--brass); }
+
+  .action-row{
+    display:flex;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  /* ===== reveal / stamp panel ===== */
+  .reveal{
+    display:none;
+    border-top:1px dashed var(--paper-shadow);
+    padding-top:14px;
+    position:relative;
+  }
+  .reveal.show{ display:block; }
+
+  .stamp-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    justify-content:center;
+    margin-bottom:6px;
+  }
+  .stamp{
+    font-family:'Fraunces', serif;
+    font-weight:700;
+    font-size:clamp(13px,3.6vw,15px);
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    padding:5px 14px;
+    border:2.5px solid currentColor;
+    border-radius:3px;
+    transform:rotate(-4deg);
+    display:inline-block;
+    opacity:0;
+    animation:stampIn .35s ease forwards;
+  }
+  @keyframes stampIn{
+    0%{ opacity:0; transform:rotate(-4deg) scale(2.2); }
+    60%{ opacity:1; }
+    100%{ opacity:1; transform:rotate(-4deg) scale(1); }
+  }
+  .stamp.correct{ color:var(--green); }
+  .stamp.wrong{ color:var(--red); }
+
+  .answer-word-row{
+    display:flex;
+    align-items:baseline;
+    justify-content:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .answer-word{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:var(--word-size);
+    font-weight:600;
+    color:var(--ink);
+  }
+  .speak-btn{
+    background:var(--paper-deep);
+    border:1.5px solid var(--paper-shadow);
+    color:var(--brass);
+    width:clamp(30px,8vw,34px); height:clamp(30px,8vw,34px);
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .speak-btn:hover{ border-color:var(--brass); color:var(--brass); }
+  .speak-btn svg{ width:16px; height:16px; }
+
+  .your-answer{
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(11.5px,3vw,12.5px);
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .your-answer span{ color:var(--red); text-decoration:line-through; }
+
+  .example{
+    text-align:center;
+    font-size:clamp(13px,3.4vw,14px);
+    color:var(--ink-soft);
+    font-style:italic;
+    margin-top:10px;
+  }
+
+  .footer-note{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:clamp(10px,2.6vw,11px);
+    color:var(--ink-soft);
+    opacity:.75;
+    text-align:center;
+    padding:0 6px;
+  }
+  kbd{
+    font-family:'IBM Plex Mono', monospace;
+    background:var(--paper-deep);
+    border:1px solid var(--paper-shadow);
+    border-radius:3px;
+    padding:1px 5px;
+    font-size:clamp(9.5px,2.4vw,10.5px);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp{ animation:none; opacity:1; }
+    input#answer.input-error{ animation:none; }
+  }
+
+  /* very small phones / short viewports */
+  @media (max-width: 360px){
+    .card{ min-height:auto; }
+    .action-row{ flex-direction:column; }
+    .action-row .btn{ width:100%; }
+  }
+  @media (max-height: 640px){
+    body{ align-items:flex-start; }
+    .stage{ padding-top:6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage">
+  <div class="masthead">
+    <div class="eyebrow">Картотека &middot; English &harr; Български</div>
+    <h1>Речникова тренировка</h1>
+    <svg class="floral-divider" viewBox="0 0 200 34" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+      <path d="M8 17 C 45 5, 75 5, 96 17"/>
+      <path d="M104 17 C 125 5, 155 5, 192 17"/>
+      <path d="M20 17 C 15 12, 15 8, 20 4" />
+      <path d="M20 17 C 25 12, 25 8, 20 4" />
+      <path d="M180 17 C 175 12, 175 8, 180 4" />
+      <path d="M180 17 C 185 12, 185 8, 180 4" />
+      <g transform="translate(100,17)" stroke="none" fill="currentColor">
+        <ellipse cx="0" cy="-6.5" rx="2.6" ry="4.4" opacity="0.55"/>
+        <ellipse cx="6.1" cy="-2" rx="2.6" ry="4.4" opacity="0.55" transform="rotate(72 6.1 -2)"/>
+        <ellipse cx="3.8" cy="5.3" rx="2.6" ry="4.4" opacity="0.55" transform="rotate(144 3.8 5.3)"/>
+        <ellipse cx="-3.8" cy="5.3" rx="2.6" ry="4.4" opacity="0.55" transform="rotate(216 -3.8 5.3)"/>
+        <ellipse cx="-6.1" cy="-2" rx="2.6" ry="4.4" opacity="0.55" transform="rotate(288 -6.1 -2)"/>
+        <circle r="2.4" opacity="0.85"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="dir-toggle" role="group" aria-label="Посока на превод">
+    <button class="dir-btn active" id="dir-bg2en" type="button">БЪЛГ. &rarr; АНГЛ.</button>
+    <button class="dir-btn" id="dir-en2bg" type="button">АНГЛ. &rarr; БЪЛГ.</button>
+  </div>
+
+  <div class="dir-toggle wrap" id="deck-toggle" role="group" aria-label="Избор на тесте">
+    <button class="dir-btn active" id="deck-all" type="button">Всички думи</button>
+    <button class="dir-btn" id="deck-recent" type="button">Последно добавени</button>
+  </div>
+
+  <div class="mistake-bar">
+    <span id="mistake-count">Сгрешени думи: 0/20</span>
+    <button class="btn btn-secondary" id="review-btn" type="button" disabled>Повтори грешките</button>
+  </div>
+
+  <div class="data-toolbar">
+    <button class="btn btn-secondary" id="download-xlsx-btn" type="button">&#8681; Свали речника (.xlsx)</button>
+    <label class="btn btn-secondary" id="upload-xlsx-label" for="upload-xlsx-input">&#8679; Качи речник (.xlsx)</label>
+    <input type="file" id="upload-xlsx-input" accept=".xlsx,.xls" style="display:none;">
+  </div>
+  <div class="data-status" id="data-status">Колони: Word, Meaning &middot; по избор: Example, Alternates, Answers</div>
+
+  <div class="card-wrap">
+    <div class="tab" id="tab-label">КАРТА 1</div>
+    <div class="card">
+      <svg class="floral-corner floral-corner-tl" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M8 92 C 20 78, 16 54, 34 46 C 50 38, 45 20, 58 8"/>
+        <path d="M22 70 C 14 66, 10 58, 14 50 C 22 54, 26 62, 22 70 Z" fill="currentColor" stroke="none" opacity="0.55"/>
+        <path d="M38 50 C 30 46, 28 36, 34 28 C 42 34, 44 44, 38 50 Z" fill="currentColor" stroke="none" opacity="0.55"/>
+        <g transform="translate(64,10)" stroke="none" fill="currentColor">
+          <ellipse cx="0" cy="-6" rx="2.4" ry="4" opacity="0.6"/>
+          <ellipse cx="5.6" cy="-2" rx="2.4" ry="4" opacity="0.6" transform="rotate(72 5.6 -2)"/>
+          <ellipse cx="3.4" cy="5.2" rx="2.4" ry="4" opacity="0.6" transform="rotate(144 3.4 5.2)"/>
+          <ellipse cx="-3.4" cy="5.2" rx="2.4" ry="4" opacity="0.6" transform="rotate(216 -3.4 5.2)"/>
+          <ellipse cx="-5.6" cy="-2" rx="2.4" ry="4" opacity="0.6" transform="rotate(288 -5.6 -2)"/>
+          <circle r="2.2" opacity="0.9"/>
+        </g>
+      </svg>
+      <svg class="floral-corner floral-corner-br" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <path d="M8 92 C 20 78, 16 54, 34 46 C 50 38, 45 20, 58 8"/>
+        <path d="M22 70 C 14 66, 10 58, 14 50 C 22 54, 26 62, 22 70 Z" fill="currentColor" stroke="none" opacity="0.55"/>
+        <path d="M38 50 C 30 46, 28 36, 34 28 C 42 34, 44 44, 38 50 Z" fill="currentColor" stroke="none" opacity="0.55"/>
+        <g transform="translate(64,10)" stroke="none" fill="currentColor">
+          <ellipse cx="0" cy="-6" rx="2.4" ry="4" opacity="0.6"/>
+          <ellipse cx="5.6" cy="-2" rx="2.4" ry="4" opacity="0.6" transform="rotate(72 5.6 -2)"/>
+          <ellipse cx="3.4" cy="5.2" rx="2.4" ry="4" opacity="0.6" transform="rotate(144 3.4 5.2)"/>
+          <ellipse cx="-3.4" cy="5.2" rx="2.4" ry="4" opacity="0.6" transform="rotate(216 -3.4 5.2)"/>
+          <ellipse cx="-5.6" cy="-2" rx="2.4" ry="4" opacity="0.6" transform="rotate(288 -5.6 -2)"/>
+          <circle r="2.2" opacity="0.9"/>
+        </g>
+      </svg>
+      <div class="progress-row">
+        <span id="score-label">0 верни</span>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <span id="count-label">1 / 242</span>
+      </div>
+
+      <div class="meaning-block">
+        <div class="meaning-label" id="meaning-label">Значение на думата</div>
+        <div class="meaning-row">
+          <div class="meaning" id="meaning-text">&nbsp;</div>
+          <button class="speak-btn" id="prompt-speak-btn" title="Прочети думата на глас" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M18.36 5.64a9 9 0 0 1 0 12.73"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="answer-zone">
+        <div class="input-row">
+          <input id="answer" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="напиши думата на английски&hellip;">
+          <button class="btn btn-check" id="check-btn">Провери</button>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-secondary" id="reveal-btn">Покажи отговора</button>
+          <button class="btn btn-secondary" id="next-btn">Следваща дума &rarr;</button>
+        </div>
+      </div>
+
+      <div class="reveal" id="reveal-panel">
+        <div class="stamp-row" id="stamp-row"></div>
+        <div class="answer-word-row">
+          <span class="answer-word" id="answer-word"></span>
+          <button class="speak-btn" id="speak-btn" title="Прочети думата на глас">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              <path d="M18.36 5.64a9 9 0 0 1 0 12.73"></path>
+            </svg>
+          </button>
+        </div>
+        <div class="your-answer" id="your-answer-line"></div>
+        <div class="example" id="example-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-note">Enter &mdash; провери &nbsp;&bull;&nbsp; <kbd>&rarr;</kbd> &mdash; следваща дума</div>
+</div>
+
+<script>
+const WORDS = [{"word": "puzzled", "meaning": "I am thinking, maybe there is a flaw", "answers": ["объркан"], "_curatedAnswers": true}, {"word": "confused", "meaning": "I don't get it", "answers": ["объркан"], "_curatedAnswers": true}, {"word": "perplexed", "meaning": "It is really hard to understand", "answers": ["объркан"], "_curatedAnswers": true}, {"word": "substantial", "meaning": "съществен", "answers": ["съществен"], "_curatedAnswers": true}, {"word": "fidelity", "meaning": "вярност", "answers": ["вярност"], "_curatedAnswers": true}, {"word": "deficient", "meaning": "неефикасен", "answers": ["неефикасен"], "_curatedAnswers": true}, {"word": "relevance", "meaning": "уместност", "answers": ["уместност"], "_curatedAnswers": true}, {"word": "rational", "meaning": "рационален", "answers": ["рационален"], "_curatedAnswers": true}, {"word": "divergent", "meaning": "двете предложения имат противоположен подход", "example": "The two proposals have divergent approaches", "answers": ["различен", "противоположен"], "_curatedAnswers": true}, {"word": "alternate", "meaning": "редувам се", "answers": ["редувам се"], "_curatedAnswers": true}, {"word": "frame", "meaning": "рамка", "answers": ["рамка"], "_curatedAnswers": true}, {"word": "sloppy", "meaning": "непрецизен", "answers": ["непрецизен"], "_curatedAnswers": true}, {"word": "persuasive", "meaning": "убедителен", "answers": ["убедителен"], "_curatedAnswers": true}, {"word": "credibility", "meaning": "убедителност", "answers": ["убедителност"], "_curatedAnswers": true}, {"word": "convey", "meaning": "предавам информация;\nтранспортирам", "answers": ["предавам информация"], "_curatedAnswers": true}, {"word": "your backing", "meaning": "подкрепа (more formal)", "answers": ["подкрепа"], "_curatedAnswers": true}, {"word": "filled-out", "meaning": "попълнен", "answers": ["попълнен"], "_curatedAnswers": true}, {"word": "seamless", "meaning": "безпроблемен", "answers": ["безпроблемен"], "_curatedAnswers": true}, {"word": "ancienter", "meaning": "предци", "answers": ["предци"], "_curatedAnswers": true}, {"word": "mind what you do", "meaning": "внимавай какво правиш", "answers": ["внимавай какво правиш"], "_curatedAnswers": true}, {"word": "discrepancy", "meaning": "различия, несъответствия", "answers": ["различия", "несъответствия"], "_curatedAnswers": true}, {"word": "concierge", "meaning": "портиер", "answers": ["портиер"], "_curatedAnswers": true}, {"word": "festive", "meaning": "празничен", "answers": ["празничен"], "_curatedAnswers": true}, {"word": "acumen", "meaning": "sharpness of mind and strategic thinking", "example": "She has strong business acumen", "answers": ["sharpness of mind and strategic thinking"], "_curatedAnswers": true}, {"word": "dune", "meaning": "дюни", "answers": ["дюни"], "_curatedAnswers": true}, {"word": "authority", "meaning": "власт", "answers": ["власт"], "_curatedAnswers": true}, {"word": "undeniable", "meaning": "неоспорим", "answers": ["неоспорим"], "_curatedAnswers": true}, {"word": "flaw", "meaning": "грешка (логически)", "answers": ["грешка"], "_curatedAnswers": true}, {"word": "fault", "meaning": "вина", "answers": ["вина"], "_curatedAnswers": true}, {"word": "defect", "meaning": "технически дефект", "answers": ["технически дефект"], "_curatedAnswers": true}, {"word": "self-taught", "meaning": "самоук", "answers": ["самоук"], "_curatedAnswers": true}, {"word": "succinct", "meaning": "сбит, но ясен и точен (more formal)", "example": "Please keep your explanation succinct.", "answers": ["сбит", "но ясен и точен"], "_curatedAnswers": true}, {"word": "concise", "meaning": "сбит, но ясен и точен", "answers": ["сбит", "но ясен и точен"], "_curatedAnswers": true}, {"word": "grasp", "meaning": "схващам", "example": "It took a while to grasp the concept", "answers": ["схващам"], "_curatedAnswers": true}, {"word": "grasp", "meaning": "хващам", "example": "She grasped the handle tightly.", "answers": ["хващам"], "_curatedAnswers": true}, {"word": "answer firmly", "meaning": "отговарям твърдо", "answers": ["отговарям твърдо"], "_curatedAnswers": true}, {"word": "firmly", "meaning": "категорично; здраво, силно", "answers": ["категорично", "здраво", "силно"], "_curatedAnswers": true}, {"word": "handle", "meaning": "дръжка", "answers": ["дръжка"], "_curatedAnswers": true}, {"word": "grap", "meaning": "приемам (възможност)", "answers": ["приемам (възможност)"], "_curatedAnswers": true}, {"word": "grab the chance while you can.", "meaning": "приеми възможността докато можеш", "answers": ["приеми възможността докато можеш"], "_curatedAnswers": true}, {"word": "fortune", "meaning": "късмет, шанс", "example": "She had the good fortune to meet a great mentor.", "answers": ["късмет", "шанс"], "_curatedAnswers": true}, {"word": "fortune", "meaning": "богатство", "example": "He made a fortune in the tech industry.", "answers": ["богатство"], "_curatedAnswers": true}, {"word": "acute sense of responsibility", "meaning": "силно изразено чувство на отровност", "answers": ["силно изразено чувство на отровност"], "_curatedAnswers": true}, {"word": "acute angle", "meaning": "остър ъгъл", "answers": ["остър ъгъл"], "_curatedAnswers": true}, {"word": "acute pain", "meaning": "остра болка", "answers": ["остра болка"], "_curatedAnswers": true}, {"word": "stray", "meaning": "бездомен", "answers": ["бездомен"], "_curatedAnswers": true}, {"word": "outlook", "meaning": "виждане, разбиране", "example": "She has a positive outlook on life.", "answers": ["виждане", "разбиране"], "_curatedAnswers": true}, {"word": "wisdom", "meaning": "мъдрец", "answers": ["мъдрец"], "_curatedAnswers": true}, {"word": "wisdom", "meaning": "мъдър човек", "answers": ["мъдър човек"], "_curatedAnswers": true}, {"word": "wisdom tooth", "meaning": "мъдрец (зъб)", "answers": ["мъдрец"], "_curatedAnswers": true}, {"word": "teeth", "meaning": "зъби", "answers": ["зъби"], "_curatedAnswers": true}, {"word": "cupboard", "meaning": "рафт", "answers": ["рафт"], "_curatedAnswers": true}, {"word": "inherent", "meaning": "вроден", "answers": ["вроден"], "_curatedAnswers": true}, {"word": "stroke", "meaning": "удар", "answers": ["удар"], "_curatedAnswers": true}, {"word": "proverb", "meaning": "поговорка", "answers": ["поговорка"], "_curatedAnswers": true}, {"word": "fallen", "meaning": "повален", "answers": ["повален"], "_curatedAnswers": true}, {"word": "With many little strokes a large tree is fallen", "meaning": "с много малки удари голямо дърво може да\nбъде отсечено", "answers": ["с много малки удари голямо дърво може да"], "_curatedAnswers": true}, {"word": "seductive", "meaning": "съблазнителен", "answers": ["съблазнителен"], "_curatedAnswers": true}, {"word": "flipside", "meaning": "отбрана страна", "answers": ["отбрана страна"], "_curatedAnswers": true}, {"word": "evident", "meaning": "очевиден", "answers": ["очевиден"], "_curatedAnswers": true}, {"word": "puppy", "meaning": "кученце", "answers": ["кученце"], "_curatedAnswers": true}, {"word": "mansion", "meaning": "имение", "answers": ["имение"], "_curatedAnswers": true}, {"word": "climb up", "meaning": "катеря се", "answers": ["катеря се"], "_curatedAnswers": true}, {"word": "trail", "meaning": "пътека", "answers": ["пътека"], "_curatedAnswers": true}, {"word": "steep", "meaning": "стръмен", "answers": ["стръмен"], "_curatedAnswers": true}, {"word": "breed", "meaning": "порода", "answers": ["порода"], "_curatedAnswers": true}, {"word": "collar", "meaning": "яка", "answers": ["яка"], "_curatedAnswers": true}, {"word": "color", "meaning": "цвят", "answers": ["цвят"], "_curatedAnswers": true}, {"word": "chest", "meaning": "гръден кош", "answers": ["гръден кош"], "_curatedAnswers": true}, {"word": "conceive", "meaning": "произлиза", "example": "The lean was conceived in USA.", "answers": ["произлиза"], "_curatedAnswers": true}, {"word": "strike", "meaning": "удрям", "example": "A sudden storm struck the coast; He struck the ball.", "answers": ["удрям"], "_curatedAnswers": true}, {"word": "go on strike", "meaning": "стачкувам", "answers": ["стачкувам"], "_curatedAnswers": true}, {"word": "contemplate", "meaning": "размишлявам - трябва ми малко време да обмисля следващите стъпки на проекта", "example": "I need some time to contemplate the next steps of the project.", "answers": ["размишлявам"], "_curatedAnswers": true}, {"word": "inevitable", "meaning": "неизбежен", "answers": ["неизбежен"], "_curatedAnswers": true}, {"word": "frankly", "meaning": "откровено", "answers": ["откровено"], "_curatedAnswers": true}, {"word": "disease", "meaning": "заболяване", "answers": ["заболяване"], "_curatedAnswers": true}, {"word": "stewardship", "meaning": "управление (governance)", "answers": ["управление"], "_curatedAnswers": true}, {"word": "canned food", "meaning": "консервирана храна", "answers": ["консервирана храна"], "_curatedAnswers": true}, {"word": "shelf-stable food", "meaning": "дълготрайни храни", "answers": ["дълготрайни храни"], "_curatedAnswers": true}, {"word": "sway", "meaning": "1. люлея се \n2. влияние", "answers": ["люлея се"], "_curatedAnswers": true}, {"word": "firsthand", "meaning": "от първа ръка", "answers": ["от първа ръка"], "_curatedAnswers": true}, {"word": "alien", "meaning": "чужд", "answers": ["чужд"], "_curatedAnswers": true}, {"word": "honored", "meaning": "уважаем", "answers": ["уважаем"], "_curatedAnswers": true}, {"word": "honor", "meaning": "чест", "answers": ["чест"], "_curatedAnswers": true}, {"word": "ever since", "meaning": "оттогава", "answers": ["оттогава"], "_curatedAnswers": true}, {"word": "suffrage", "meaning": "право на гласуване", "answers": ["право на гласуване"], "_curatedAnswers": true}, {"word": "spur", "meaning": "подтиквам", "answers": ["подтиквам"], "_curatedAnswers": true}, {"word": "tackle", "meaning": "заемам се", "answers": ["заемам се"], "_curatedAnswers": true}, {"word": "willpower", "meaning": "сила на волята", "answers": ["сила на волята"], "_curatedAnswers": true}, {"word": "unwavering", "meaning": "непреклонен", "answers": ["непреклонен"], "_curatedAnswers": true}, {"word": "stem from", "meaning": "произтичам", "answers": ["произтичам"], "_curatedAnswers": true}, {"word": "inner critic", "meaning": "вътрешна критика", "answers": ["вътрешна критика"], "_curatedAnswers": true}, {"word": "process", "meaning": "преработвам", "answers": ["преработвам"], "_curatedAnswers": true}, {"word": "combat", "meaning": "битка", "answers": ["битка"], "_curatedAnswers": true}, {"word": "cope", "meaning": "преодолявам", "answers": ["преодолявам"], "_curatedAnswers": true}, {"word": "burglar", "meaning": "крадец", "answers": ["крадец"], "_curatedAnswers": true}, {"word": "dept", "meaning": "дълг", "answers": ["дълг"], "_curatedAnswers": true}, {"word": "revoke a dept", "meaning": "отменям дълг", "answers": ["отменям дълг"], "_curatedAnswers": true}, {"word": "neglect", "meaning": "неглижирам", "answers": ["неглижирам"], "_curatedAnswers": true}, {"word": "interrogate", "meaning": "разпитвам", "answers": ["разпитвам"], "_curatedAnswers": true}, {"word": "inquire", "meaning": "попитам", "answers": ["попитам"], "_curatedAnswers": true}, {"word": "stew", "meaning": "задушавам; задушено", "answers": ["задушавам", "задушено"], "_curatedAnswers": true}, {"word": "stubborn", "meaning": "инат", "answers": ["инат"], "_curatedAnswers": true}, {"word": "downfall", "meaning": "падане", "answers": ["падане"], "_curatedAnswers": true}, {"word": "impediment", "meaning": "пречка", "answers": ["пречки"], "_curatedAnswers": true}, {"word": "ambiguity", "meaning": "неяснота", "answers": ["неяснота"], "_curatedAnswers": true}, {"word": "inaugural", "meaning": "встъпителен", "answers": ["встъпителен"], "_curatedAnswers": true}, {"word": "abuse", "meaning": "обиждам", "answers": ["обиждам"], "_curatedAnswers": true}, {"word": "abuse", "meaning": "злоупотреба", "answers": ["злоупотреба"], "_curatedAnswers": true}, {"word": "abuse with authority", "meaning": "злоупотреба с власт", "answers": ["злоупотреба с власт"], "_curatedAnswers": true}, {"word": "amplify", "meaning": "усилвам / увеличавам / засилвам ефекта", "answers": ["усилвам", "увеличавам", "засилвам ефекта"], "_curatedAnswers": true}, {"word": "reinforce", "meaning": "укрепвам / затвърждавам / подсилвам", "example": "Regular updates help reinforce transparency", "answers": ["укрепвам", "затвърждавам", "подсилвам"], "_curatedAnswers": true}, {"word": "underpin", "meaning": "подкрепям / служа като основа / стоя в основата", "answers": ["подкрепям", "служа като основа", "стоя в основата"], "_curatedAnswers": true}, {"word": "pose a problem", "meaning": "представям проблем", "answers": ["представям проблем"], "_curatedAnswers": true}, {"word": "cause a problem", "meaning": "причинявам проблем", "answers": ["причинявам проблем"], "_curatedAnswers": true}, {"word": "comply", "meaning": "съобразявам се", "answers": ["съобразявам се"], "_curatedAnswers": true}, {"word": "thrive", "meaning": "преуспявам", "answers": ["преуспявам"], "_curatedAnswers": true}, {"word": "stall", "meaning": "блокирам", "answers": ["блокирам"], "_curatedAnswers": true}, {"word": "dread", "meaning": "силен страх", "answers": ["силен страх"], "_curatedAnswers": true}, {"word": "substitute", "meaning": "заменям", "answers": ["заменям"], "_curatedAnswers": true}, {"word": "supplement", "meaning": "добавям", "answers": ["добавям"], "_curatedAnswers": true}, {"word": "compose", "meaning": "пиша, творя", "answers": ["пиша", "творя"], "_curatedAnswers": true}, {"word": "invent", "meaning": "изобретявам", "answers": ["изобретявам"], "_curatedAnswers": true}, {"word": "enterprise", "meaning": "предприятие", "answers": ["предприятие"], "_curatedAnswers": true}, {"word": "refine", "meaning": "преработвам", "answers": ["преработвам"], "_curatedAnswers": true}, {"word": "deviate from topic", "meaning": "отклонявам се темата", "answers": ["отклонявам се темата"], "_curatedAnswers": true}, {"word": "praise", "meaning": "хваля", "answers": ["хваля"], "_curatedAnswers": true}, {"word": "praiseworthily", "meaning": "с похвала", "answers": ["с похвала"], "_curatedAnswers": true}, {"word": "praiseworthy", "meaning": "похвален", "answers": ["похвален"], "_curatedAnswers": true}, {"word": "in a row", "meaning": "пореден", "answers": ["пореден"], "_curatedAnswers": true}, {"word": "Three days in a row", "meaning": "три поредни дни", "answers": ["три поредни дни"], "_curatedAnswers": true}, {"word": "ceiling", "meaning": "таван", "answers": ["таван"], "_curatedAnswers": true}, {"word": "at the age of 15", "meaning": "на 15 годишна възраст", "answers": ["на 15 годишна възраст"], "_curatedAnswers": true}, {"word": "in her late sixties", "meaning": "в края на 60-те си години", "answers": ["в края на 60-те си години"], "_curatedAnswers": true}, {"word": "sailor", "meaning": "моряк", "answers": ["моряк"], "_curatedAnswers": true}, {"word": "dawn", "meaning": "зори", "alternates": ["at dawn"], "answers": ["зори"], "_curatedAnswers": true}, {"word": "at the end of", "meaning": "в края (на нещо конкретно)", "answers": ["в края"], "_curatedAnswers": true}, {"word": "in the end", "meaning": "накрая, в крайна сметка, в заключение", "answers": ["накрая", "в крайна сметка", "в заключение"], "_curatedAnswers": true}, {"word": "dusk", "meaning": "здрач", "answers": ["здрач"], "_curatedAnswers": true}, {"word": "from dawn to dusk", "meaning": "от зори до здрач", "answers": ["от зори до здрач"], "_curatedAnswers": true}, {"word": "at the top of the screen", "meaning": "в горната част на екрана", "answers": ["в горната част на екрана"], "_curatedAnswers": true}, {"word": "on the shelf", "meaning": "на етажерката", "answers": ["на етажерката"], "_curatedAnswers": true}, {"word": "dust", "meaning": "прах", "answers": ["прах"], "_curatedAnswers": true}, {"word": "think of an idea", "meaning": "сещам се, измислям (идея)", "answers": ["сещам се", "измислям"], "_curatedAnswers": true}, {"word": "textbook", "meaning": "учебник", "answers": ["учебник"], "_curatedAnswers": true}, {"word": "blood tests", "meaning": "кръвни изследвания", "answers": ["кръвни резултати"], "_curatedAnswers": true}, {"word": "books on leadership skills", "meaning": "книги за академични науки", "answers": ["книги за академични науки"], "_curatedAnswers": true}, {"word": "books about travel", "meaning": "книги за пътувания и други", "answers": ["книги за пътувания и други"], "_curatedAnswers": true}, {"word": "on display", "meaning": "изложен на показ, показан, изложен", "answers": ["изложен на показ", "показан", "изложен"], "_curatedAnswers": true}, {"word": "far from", "meaning": "изобщо не, съвсем не", "answers": ["изобщо не", "съвсем не"], "_curatedAnswers": true}, {"word": "I am far from defending his actions.", "meaning": "Съвсем не защитавам действията му.", "answers": ["Съвсем не защитавам действията му."], "_curatedAnswers": true}, {"word": "it is far from convincing", "meaning": "изобщо не е убедително", "answers": ["изобщо не е убедително"], "_curatedAnswers": true}, {"word": "lean", "meaning": "накланям се /облягам се / опирам се", "answers": ["накланям се", "облягам се", "опирам се"], "_curatedAnswers": true}, {"word": "He leaned against the wall.", "meaning": "Той се облегна на стената", "answers": ["Той се облегна на стената"], "_curatedAnswers": true}, {"word": "She leaned forward to listen", "meaning": "Тя се наклони напред, за да слуша.", "answers": ["Тя се наклони напред", "за да слуша."], "_curatedAnswers": true}, {"word": "You can lean on me", "meaning": "Можеш да разчиташ на мен", "answers": ["Можеш да разчиташ на мен"], "_curatedAnswers": true}, {"word": "make fun of me", "meaning": "подигравам се на мен", "answers": ["подигравам се на мен"], "_curatedAnswers": true}, {"word": "at first", "meaning": "първоначално", "answers": ["първоначално"], "_curatedAnswers": true}, {"word": "by the sea", "meaning": "край морето / близо до морето", "answers": ["край морето", "близо до морето"], "_curatedAnswers": true}, {"word": "at sea", "meaning": "в морето / в открито море (кораб)", "answers": ["в морето", "в открито море"], "_curatedAnswers": true}, {"word": "in the sea", "meaning": "в морето (във водата)", "answers": ["в морето"], "_curatedAnswers": true}, {"word": "at the seaside", "meaning": "на морето (като дестинация)", "answers": ["на морето"], "_curatedAnswers": true}, {"word": "over an hour", "meaning": "над 1 час", "answers": ["над 1 час"], "_curatedAnswers": true}, {"word": "at war", "meaning": "във война / във военно състояние", "answers": ["във война", "във военно състояние"], "_curatedAnswers": true}, {"word": "pay attention to", "meaning": "обърнеtе внимание на", "answers": ["обърнеtе внимание на"], "_curatedAnswers": true}, {"word": "off the coast", "meaning": "в морето близо до брега", "answers": ["в морето близо до брега"], "_curatedAnswers": true}, {"word": "by the coast", "meaning": "на сушата, край морето", "alternates": ["by the sea"], "answers": ["на сушата", "край морето"], "_curatedAnswers": true}, {"word": "on the coast", "meaning": "разположен на самия бряг", "answers": ["разположен на самия бряг"], "_curatedAnswers": true}, {"word": "a group of islands off the coast of Greece", "meaning": "група острови край брега на Гърция", "answers": ["група острови край брега на Гърция"], "_curatedAnswers": true}, {"word": "utmost result", "meaning": "максимален резултат", "answers": ["максимален резултат"], "_curatedAnswers": true}, {"word": "dull", "meaning": "скучен, безинтересен", "answers": ["скучен", "безинтересен"], "_curatedAnswers": true}, {"word": "dull pain", "meaning": "тъпа болка", "answers": ["тъпа болка"], "_curatedAnswers": true}, {"word": "prominent", "meaning": "известен, важен - известен учен", "example": "a prominent scientist", "answers": ["известен", "важен"], "_curatedAnswers": true}, {"word": "in a prominent position.", "meaning": "лесно забележим / на видно място", "example": "The button is in a prominent position", "answers": ["лесно забележим", "на видно място -"], "_curatedAnswers": true}, {"word": "prone", "meaning": "склонен", "answers": ["склонен"], "_curatedAnswers": true}, {"word": "accustomed to", "meaning": "свикнал с, привикнал към, привикнал да", "answers": ["свикнал с", "привикнал към", "привикнал да"], "_curatedAnswers": true}, {"word": "diligent", "meaning": "усърден, прилежен, трудолюбив", "answers": ["усърден", "прилежен", "трудолюбив"], "_curatedAnswers": true}, {"word": "readily", "meaning": "с готовност", "answers": ["с готовност"], "_curatedAnswers": true}, {"word": "integral part", "meaning": "неразделна част / съществена част", "answers": ["неразделна част", "съществена част"], "_curatedAnswers": true}, {"word": "conquer", "meaning": "покорявам", "answers": ["покорявам"], "_curatedAnswers": true}, {"word": "nugget", "meaning": "1. малко парче месо/хапки\n2. малка, но много полезна информация", "example": "That’s a useful nugget.", "answers": ["малко парче месо", "хапки"], "_curatedAnswers": true}, {"word": "propensity", "meaning": "склонност", "answers": ["склонност"], "_curatedAnswers": true}, {"word": "dyed", "meaning": "изрусен", "answers": ["изрусен"], "_curatedAnswers": true}, {"word": "ascertain", "meaning": "установявам", "answers": ["установявам"], "_curatedAnswers": true}, {"word": "patient", "meaning": "търпелив", "answers": ["търпелив човек"], "_curatedAnswers": true}, {"word": "decisive", "meaning": "решителен", "answers": ["когато човек взема решения бързо и уверено"], "_curatedAnswers": true}, {"word": "determined", "meaning": "устремен, целенасочен", "answers": ["когато човек е упорит и не се отказва"], "_curatedAnswers": true}, {"word": "showcased", "meaning": "демонстриран", "answers": ["демонстриран"], "_curatedAnswers": true}, {"word": "I am fond of babies", "meaning": "обичам много бебета", "answers": ["обичам много бебета"], "_curatedAnswers": true}, {"word": "pleased with", "meaning": "доволен от / удовлетворен от", "answers": ["доволен от", "удовлетворен от"], "_curatedAnswers": true}, {"word": "famous for their hospitality", "meaning": "известни със своето гостоприемство", "answers": ["известни със своето гостоприемство"], "_curatedAnswers": true}, {"word": "I am used to", "meaning": "Свикнал/а съм с, привикнал/а съм към", "answers": ["Свикнал", "а съм с", "привикнал", "а съм към"], "_curatedAnswers": true}, {"word": "rich in vitamins", "meaning": "богат на", "answers": ["богат на"], "_curatedAnswers": true}, {"word": "tired of", "meaning": "изморен от", "answers": ["изморен от"], "_curatedAnswers": true}, {"word": "look after", "meaning": "грижа се за/ наглеждам", "answers": ["грижа се за", "наглеждам"], "_curatedAnswers": true}, {"word": "don't get mad at me", "meaning": "не ми се ядосвай", "answers": ["не ми се ядосвай"], "_curatedAnswers": true}, {"word": "among the best", "meaning": "сред най-добрите", "answers": ["сред най-добрите"], "_curatedAnswers": true}, {"word": "rest of", "meaning": "почивка от", "answers": ["почивка от"], "_curatedAnswers": true}, {"word": "known for", "meaning": "известен с", "answers": ["известен с"], "_curatedAnswers": true}, {"word": "neighbor", "meaning": "съсед", "answers": ["съсед"], "_curatedAnswers": true}, {"word": "neighborhood", "meaning": "квартал", "answers": ["квартал"], "_curatedAnswers": true}, {"word": "all-wheels-drive", "meaning": "4x4 кола", "answers": ["4x4 кола"], "_curatedAnswers": true}, {"word": "young", "meaning": "млад", "answers": ["млад"], "_curatedAnswers": true}, {"word": "fat up with", "meaning": "писнало ми е", "answers": ["писнало ми е"], "_curatedAnswers": true}, {"word": "fence", "meaning": "ограда", "answers": ["ограда"], "_curatedAnswers": true}, {"word": "tense", "meaning": "напрежение", "answers": ["напрежение"], "_curatedAnswers": true}, {"word": "borehole", "meaning": "сондаж", "answers": ["сондаж"], "_curatedAnswers": true}, {"word": "intake", "meaning": "приемане/поемане", "answers": ["приемане", "поемане"], "_curatedAnswers": true}, {"word": "intake of breath", "meaning": "поемане на дъх", "answers": ["поемане на дъх"], "_curatedAnswers": true}, {"word": "intake process", "meaning": "входящ процес", "answers": ["входящ процес"], "_curatedAnswers": true}, {"word": "case intake process", "meaning": "процес на приемане на случаи", "answers": ["процес на приемане на случаи"], "_curatedAnswers": true}, {"word": "stand", "meaning": "намирам се", "answers": ["намирам се"], "_curatedAnswers": true}, {"word": "stand by a decision", "meaning": "отстоявам решение", "answers": ["отстоявам"], "_curatedAnswers": true}, {"word": "it tastes", "meaning": "има вкус", "answers": ["има вкус"], "_curatedAnswers": true}, {"word": "it smalls", "meaning": "Има миризма", "answers": ["Има миризма"], "_curatedAnswers": true}, {"word": "long-lasting effect", "meaning": "дълготраен (ефект) , трайно (впечатление)", "answers": ["дълготраен (ефект)", "трайно"], "_curatedAnswers": true}, {"word": "seemingly", "meaning": "привидно, на пръв поглед", "answers": ["привидно", "на пръв поглед"], "_curatedAnswers": true}, {"word": "seemingly unrelated issues", "meaning": "наглед несвързани проблеми", "answers": ["наглед несвързани проблеми"], "_curatedAnswers": true}, {"word": "amend", "meaning": "Да се направи лека промяна, за да стане нещо по‑точно или по‑добро", "example": "Please amend the document accordingly.", "answers": ["Да се направи лека промяна", "за да стане нещо по-точно или по-добро"], "_curatedAnswers": true}, {"word": "smug", "meaning": "самодоволен", "answers": ["самодоволен"], "_curatedAnswers": true}, {"word": "The situation was overwhelming at first", "meaning": "Ситуацията беше много натоварваща в началото.", "answers": ["Ситуацията беше много натоварваща в началото."], "_curatedAnswers": true}, {"word": "overwhelmed", "meaning": "Тя се почувства претоварена от работата", "example": "She felt overwhelmed by the workload.", "answers": ["Тя се почувства претоварена от работата"], "_curatedAnswers": true}, {"word": "to channel my mindset", "meaning": "да насоча начина си на мислене", "answers": ["да насоча начина си на мислене"], "_curatedAnswers": true}, {"word": "fortnight", "meaning": "две седмици / период от 14 дни", "answers": ["две седмици", "период от 14 дни"], "_curatedAnswers": true}, {"word": "adjacent page", "meaning": "съседна страница", "answers": ["съседна страница"], "_curatedAnswers": true}, {"word": "stab", "meaning": "намушквам", "example": "He was stabbed in the leg.", "answers": ["Той беше намушкан в крака"], "_curatedAnswers": true}, {"word": "gratitude", "meaning": "благодарност", "answers": ["благодарност"], "_curatedAnswers": true}, {"word": "as a token of my gratitude", "meaning": "в знак на моята благодарност", "answers": ["в знак на моята благодарност"], "_curatedAnswers": true}, {"word": "token", "meaning": "знак, символ", "answers": ["знак", "символ"], "_curatedAnswers": true}, {"word": "decade", "meaning": "десетилетие", "answers": ["десетилетие"], "_curatedAnswers": true}, {"word": "earthquake", "meaning": "земетресение", "answers": ["земетресение"], "_curatedAnswers": true}, {"word": "shout", "meaning": "вик; викам", "answers": ["вик", "викам"], "_curatedAnswers": true}, {"word": "boot", "meaning": "ботуш", "answers": ["ботуш"], "_curatedAnswers": true}, {"word": "agility", "meaning": "гъвкавост", "answers": ["гъвкавост"], "_curatedAnswers": true}, {"word": "riser", "meaning": "изгряваща личност/\nслужител с бързо развитие", "answers": ["изгряваща личност"], "_curatedAnswers": true}, {"word": "versatile tool", "meaning": "многофункционален инструмент", "answers": ["многофункционален инструмент"], "_curatedAnswers": true}, {"word": "versatile employee", "meaning": "универсален / гъвкав служител", "answers": ["универсален/ гъвкав служител"], "_curatedAnswers": true}, {"word": "assembly", "meaning": "събрание", "answers": ["събрание"], "_curatedAnswers": true}, {"word": "gradually phased out", "meaning": "постепенно изведен (от употреба)", "answers": ["постепенно изведен"], "_curatedAnswers": true}, {"word": "booth", "meaning": "щанд (най‑често – изложения, събития, панаири)", "answers": ["щанд"], "_curatedAnswers": true}, {"word": "defer", "meaning": "отлагам", "answers": ["отлагам"], "_curatedAnswers": true}, {"word": "incurred cost", "meaning": "натрупани разходи", "answers": ["натрупани разходи"], "_curatedAnswers": true}, {"word": "oversight", "meaning": "надзор", "answers": ["недоглеждане"], "_curatedAnswers": true}, {"word": "oversight", "meaning": "недоглеждане", "answers": ["надзор"], "_curatedAnswers": true}, {"word": "notion", "meaning": "възприемане", "answers": ["възприемане"], "_curatedAnswers": true}, {"word": "blissful", "meaning": "щастлив", "answers": ["щастлив"], "_curatedAnswers": true}, {"word": "flame", "meaning": "пламък", "answers": ["пламък"], "_curatedAnswers": true}, {"word": "wound", "meaning": "рана", "answers": ["рана"], "_curatedAnswers": true}, {"word": "mar", "meaning": "развалям, помръчавам", "answers": ["развалям, помръчавам"], "_curatedAnswers": true}, {"word": "scar", "meaning": "оставам белег", "answers": ["оставам белег"], "_curatedAnswers": true}, {"word": "serenity", "meaning": "спокойствое", "answers": ["спокойствое"], "_curatedAnswers": true}, {"word": "thread", "meaning": "конец", "answers": ["конец"], "_curatedAnswers": true}, {"word": "tier", "meaning": "ред", "answers": ["ред"], "_curatedAnswers": true}, {"word": "vacancy", "meaning": "свободно място", "answers": ["свободно място"], "_curatedAnswers": true}, {"word": "harvest", "meaning": "реколта", "answers": ["реколта"], "_curatedAnswers": true}, {"word": "constraint", "meaning": "ограничение", "answers": ["ограничение"], "_curatedAnswers": true}, {"word": "velocity", "meaning": "скорост", "answers": ["скорост"], "_curatedAnswers": true}, {"word": "bat", "meaning": "прилеп", "answers": ["прилеп"], "_curatedAnswers": true}, {"word": "firefly", "meaning": "светулка", "answers": ["светулка"], "_curatedAnswers": true}, {"word": "determination", "meaning": "решителност", "answers": ["решителност"], "_curatedAnswers": true}, {"word": "anxiety", "meaning": "тревога", "answers": ["тревога"], "_curatedAnswers": true}, {"word": "pivot", "meaning": "стълб", "answers": ["стълб"], "_curatedAnswers": true}, {"word": "rapport", "meaning": "разбирателство", "answers": ["разбирателство"], "_curatedAnswers": true}, {"word": "conjunction", "meaning": "натрупване", "answers": ["натрупване"], "_curatedAnswers": true}, {"word": "spotlight", "meaning": "прожектор", "answers": ["прожектор"], "_curatedAnswers": true}, {"word": "likelihood", "meaning": "вероятност", "answers": ["вероятност"], "_curatedAnswers": true}, {"word": "baseline", "meaning": "начална точка (от която се следи промяната)", "answers": ["начална точка (от която се следи промяната)"], "_curatedAnswers": true}, {"word": "blueprint", "meaning": "план", "answers": ["план"], "_curatedAnswers": true}, {"word": "depth", "meaning": "дълбочина", "answers": ["дълбочина"], "_curatedAnswers": true}, {"word": "instant", "meaning": "миг", "answers": ["миг"], "_curatedAnswers": true}, {"word": "resignation", "meaning": "оставка", "answers": ["оставка"], "_curatedAnswers": true}, {"word": "shortage", "meaning": "недостиг", "answers": ["недостиг"], "_curatedAnswers": true}, {"word": "culprit", "meaning": "виновник", "answers": ["виновник"], "_curatedAnswers": true}, {"word": "demention", "meaning": "измерение", "answers": ["измерение"], "_curatedAnswers": true}, {"word": "tangible", "meaning": "значим", "answers": ["значим"], "_curatedAnswers": true}, {"word": "procurement", "meaning": "набавяне", "answers": ["набавяне"], "_curatedAnswers": true}, {"word": "deadlock", "meaning": "безходица", "answers": ["безходица"], "_curatedAnswers": true}, {"word": "setback", "meaning": "спънка", "answers": ["спънка"], "_curatedAnswers": true}, {"word": "obstacle", "meaning": "пречка", "answers": ["пречка"], "_curatedAnswers": true}, {"word": "alienation", "meaning": "отчуждение", "answers": ["отчуждение"], "_curatedAnswers": true}, {"word": "inception", "meaning": "начало", "answers": ["начало"], "_curatedAnswers": true}, {"word": "insider", "meaning": "вътрешен човек", "answers": ["вътрешен човек"], "_curatedAnswers": true}, {"word": "outsider", "meaning": "външен човек", "answers": ["външен човек"], "_curatedAnswers": true}, {"word": "tenant", "meaning": "наемател", "answers": ["наемател"], "_curatedAnswers": true}, {"word": "lease", "meaning": "наем", "answers": ["наем"], "_curatedAnswers": true}, {"word": "loan", "meaning": "заем", "answers": ["заем"], "_curatedAnswers": true}, {"word": "density", "meaning": "плътност", "answers": ["плътност"], "_curatedAnswers": true}, {"word": "consent", "meaning": "съгласие", "answers": ["съгласие"], "_curatedAnswers": true}, {"word": "contest", "meaning": "състезание", "answers": ["състезание"], "_curatedAnswers": true}, {"word": "burden", "meaning": "товор", "answers": ["товор"], "_curatedAnswers": true}, {"word": "caveat", "meaning": "уговорка, предупреждение", "answers": ["уговорка, предупреждение"], "_curatedAnswers": true}, {"word": "anchor", "meaning": "котва", "answers": ["котва"], "_curatedAnswers": true}, {"word": "dock", "meaning": "кей", "answers": ["кей"], "_curatedAnswers": true}, {"word": "harbor", "meaning": "пристанище", "answers": ["пристанище"], "_curatedAnswers": true}, {"word": "conjunction", "meaning": "съюз", "answers": ["съюз"], "_curatedAnswers": true}, {"word": "skyline", "meaning": "хоризонт", "answers": ["хоризонт"], "_curatedAnswers": true}, {"word": "hassle", "meaning": "неприятности", "answers": ["неприятности"], "_curatedAnswers": true}, {"word": "livery", "meaning": "униформа", "answers": ["униформа"], "_curatedAnswers": true}, {"word": "shelter", "meaning": "убежище", "answers": ["убежище"], "_curatedAnswers": true}, {"word": "benchmark", "meaning": "еталон", "answers": ["еталон"]}, {"word": "it seems off", "meaning": "изглежда грешно", "answers": ["изглежда грешно"]}, {"word": "minor", "meaning": "допълнителна (втора) специалност", "answers": ["допълнителна (втора) специалност"]}, {"word": "few-shot prompt", "meaning": "промт техника с примери", "answers": ["промт техника с примери"]}, {"word": "token", "meaning": "a small chunk of text", "answers": ["a small chunk of text"]}, {"word": "tighten", "meaning": "подобрявам, усъвършенствам", "answers": ["подобрявам", "усъвършенствам"]}, {"word": "tedious", "meaning": "досаден", "answers": ["досаден"]}, {"word": "sentiment", "meaning": "настроение", "answers": ["настроение"]}, {"word": "surpass", "meaning": "надминавам", "answers": ["надминавам"]}, {"word": "problem surfaced", "meaning": "появява се проблем", "answers": ["появява се проблем"]}, {"word": "Disclaimer", "meaning": "отказ от отговорност", "answers": ["отказ от отговорност"]}, {"word": "contention", "meaning": "разногласие", "answers": ["разногласие"]}, {"word": "Paramount", "meaning": "от първостепенно значение", "answers": ["от първостепенно значение"]}, {"word": "keel", "meaning": "Устойчивост / баланс", "answers": ["Устойчивост", "баланс"]}, {"word": "alongside", "meaning": "наред, заедно със, в сътрудничество", "answers": ["наред", "заедно със", "в сътрудничество"]}, {"word": "comprehension", "meaning": "разбиране", "answers": ["разбиране"]}, {"word": "off the clock", "meaning": "video that shows people outside their regular work roles", "answers": ["video that shows people outside their regular work roles"]}];
+
+let order = [];
+let idx = 0;
+let score = 0;
+let answered = false;
+let mode = 'bg2en'; // 'bg2en' = show Bulgarian, type English | 'en2bg' = show English, type Bulgarian
+
+let mistakeQueue = [];      // last-20 wrong words (word objects), FIFO
+let reviewMode = false;     // true while drilling the mistake queue
+let reviewOrder = [];       // working queue for the current review session
+let reviewTotal = 0;        // size of the queue when the review session started
+
+let practiceMode = 'all';   // 'all' | 'recent' | <name of any extra sheet>
+let categories = {};        // extra named word sets, one per extra sheet in the xlsx
+let categoryOrder = [];     // sheet order, for stable button rendering
+let currentDeck = WORDS;    // the array actually being practiced right now
+
+function deckFor(modeName){
+  if(modeName === 'recent') return WORDS.slice(-20);
+  if(modeName === 'all') return WORDS;
+  return categories[modeName] || [];
+}
+
+function currentItem(){
+  if(reviewMode) return reviewOrder[0] || currentDeck[order[idx]];
+  return currentDeck[order[idx]];
+}
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function normalize(s){
+  return s.trim().toLowerCase().replace(/\s+/g,' ');
+}
+
+function getOptions(){
+  const item = currentItem();
+  if(mode === 'en2bg'){
+    return (item.answers && item.answers.length) ? item.answers : [item.meaning.split('\n')[0].trim()];
+  }
+  const opts = [item.word];
+  if(item.alternates) opts.push(...item.alternates);
+  return opts;
+}
+
+/* ---- last-20 mistakes queue: collect wrong words, offer a focused replay ---- */
+const MISTAKE_LIMIT = 20;
+
+function updateMistakeUI(){
+  if(reviewMode){
+    mistakeCountEl.textContent = 'Преговор на грешки \u2014 остават ' + reviewOrder.length;
+    reviewBtn.textContent = 'Излез от преговора';
+    reviewBtn.disabled = false;
+    reviewBtn.classList.remove('pulse');
+  } else {
+    mistakeCountEl.textContent = 'Сгрешени думи: ' + mistakeQueue.length + '/' + MISTAKE_LIMIT;
+    reviewBtn.textContent = 'Повтори грешките';
+    const ready = mistakeQueue.length >= MISTAKE_LIMIT;
+    reviewBtn.disabled = !ready;
+    reviewBtn.classList.toggle('pulse', ready);
+  }
+}
+
+function addMistake(item){
+  const wasReady = mistakeQueue.length >= MISTAKE_LIMIT;
+  const i = mistakeQueue.indexOf(item);
+  if(i !== -1) mistakeQueue.splice(i, 1);
+  mistakeQueue.push(item);
+  if(mistakeQueue.length > MISTAKE_LIMIT) mistakeQueue.shift();
+  updateMistakeUI();
+  if(!wasReady && mistakeQueue.length >= MISTAKE_LIMIT && !reviewMode){
+    setDataStatus('Събра ' + MISTAKE_LIMIT + ' сгрешени думи \u2014 натисни \u201EПовтори грешките\u201C, за да ги упражниш.');
+  }
+}
+
+function removeMistake(item){
+  const i = mistakeQueue.indexOf(item);
+  if(i === -1) return;
+  mistakeQueue.splice(i, 1);
+  updateMistakeUI();
+}
+
+function startReview(){
+  if(mistakeQueue.length === 0) return;
+  reviewMode = true;
+  reviewOrder = shuffle(mistakeQueue.slice());
+  reviewTotal = reviewOrder.length;
+  clearTimeout(autoAdvanceTimeout);
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  updateMistakeUI();
+  loadCard();
+}
+
+function exitReview(){
+  reviewMode = false;
+  clearTimeout(autoAdvanceTimeout);
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  updateMistakeUI();
+  loadCard();
+}
+
+function finishReview(){
+  reviewMode = false;
+  updateMistakeUI();
+  setDataStatus('\uD83C\uDF89 Всички сгрешени думи бяха затвърдени!');
+  loadCard();
+}
+
+/* ---- error tone (Web Audio, no external file needed) ---- */
+let audioCtx = null;
+function playErrorTone(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+    const ctx = audioCtx;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(190, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(120, ctx.currentTime + 0.16);
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.13, ctx.currentTime + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.2);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.22);
+  }catch(e){ /* audio unsupported, fail silently */ }
+}
+
+let shakeTimeout = null;
+function flashInputError(){
+  answerInput.classList.remove('input-error');
+  void answerInput.offsetWidth; // restart animation
+  answerInput.classList.add('input-error');
+  clearTimeout(shakeTimeout);
+  shakeTimeout = setTimeout(()=> answerInput.classList.remove('input-error'), 300);
+}
+
+const meaningEl = document.getElementById('meaning-text');
+const meaningLabel = document.getElementById('meaning-label');
+const countLabel = document.getElementById('count-label');
+const scoreLabel = document.getElementById('score-label');
+const progressFill = document.getElementById('progress-fill');
+const tabLabel = document.getElementById('tab-label');
+const answerInput = document.getElementById('answer');
+const revealPanel = document.getElementById('reveal-panel');
+const stampRow = document.getElementById('stamp-row');
+const answerWordEl = document.getElementById('answer-word');
+const yourAnswerLine = document.getElementById('your-answer-line');
+const exampleLine = document.getElementById('example-line');
+const speakBtn = document.getElementById('speak-btn');
+const promptSpeakBtn = document.getElementById('prompt-speak-btn');
+const dirBg2enBtn = document.getElementById('dir-bg2en');
+const dirEn2bgBtn = document.getElementById('dir-en2bg');
+const deckAllBtn = document.getElementById('deck-all');
+const deckRecentBtn = document.getElementById('deck-recent');
+const deckToggle = document.getElementById('deck-toggle');
+const categoryButtons = new Map(); // category name -> its button element
+const mistakeCountEl = document.getElementById('mistake-count');
+const reviewBtn = document.getElementById('review-btn');
+
+function splitMeaning(item){
+  // Some entries have a curated "Answers" column holding the authoritative Bulgarian
+  // translation, while "Meaning" holds English clarifying context instead. For those,
+  // show the curated answer as the primary text and the meaning (if different) as extra.
+  if(item._curatedAnswers && item.answers && item.answers.length){
+    const primary = item.answers.join(' / ');
+    const rawExtra = (item.meaning || '').trim();
+    const extra = (rawExtra && normalize(rawExtra) !== normalize(primary)) ? rawExtra : null;
+    return { primary, extra };
+  }
+  // Otherwise meaning strings sometimes contain " - " extra context; keep primary
+  // translation bold, rest as extra line.
+  const raw = item.meaning || '';
+  const parts = raw.split(' - ');
+  return { primary: parts[0].trim(), extra: parts.length > 1 ? parts.slice(1).join(' - ').trim() : null };
+}
+
+function loadCard(){
+  answered = false;
+  revealPanel.classList.remove('show');
+  answerInput.value = '';
+  answerInput.disabled = false;
+  answerInput.classList.remove('input-error');
+  answerInput.focus();
+  stampRow.innerHTML = '';
+
+  const item = currentItem();
+
+  if(mode === 'en2bg'){
+    meaningLabel.textContent = 'Английска дума';
+    meaningEl.innerHTML = item.word;
+    promptSpeakBtn.style.display = 'inline-flex';
+    answerInput.placeholder = 'напиши превода на български\u2026';
+  } else {
+    meaningLabel.textContent = 'Значение на думата';
+    const { primary, extra } = splitMeaning(item);
+    meaningEl.innerHTML = primary + (extra ? '<span class="extra">' + extra + '</span>' : '');
+    promptSpeakBtn.style.display = 'none';
+    answerInput.placeholder = 'напиши думата на английски\u2026';
+  }
+
+  const deckLabel = practiceMode === 'recent' ? 'ПОСЛЕДНИ' : practiceMode === 'all' ? 'КАРТА' : practiceMode.toUpperCase();
+  countLabel.textContent = reviewMode
+    ? reviewOrder.length + ' оставащи'
+    : (idx+1) + ' / ' + currentDeck.length;
+  tabLabel.textContent = reviewMode ? 'ПРЕГОВОР' : deckLabel + ' ' + (idx+1);
+  progressFill.style.width = reviewMode
+    ? (reviewTotal ? (100*(reviewTotal - reviewOrder.length)/reviewTotal) + '%' : '0%')
+    : (100*(idx+1)/currentDeck.length) + '%';
+
+  exampleLine.textContent = item.example ? '\u201C' + item.example + '\u201D' : '';
+  yourAnswerLine.textContent = '';
+}
+
+function speak(text, onEnd){
+  if(!('speechSynthesis' in window)){
+    if(onEnd) setTimeout(onEnd, 900);
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  u.rate = 0.92;
+  const voices = window.speechSynthesis.getVoices();
+  const enVoice = voices.find(v => v.lang && v.lang.startsWith('en'));
+  if(enVoice) u.voice = enVoice;
+  if(onEnd){
+    u.onend = onEnd;
+    u.onerror = onEnd;
+  }
+  window.speechSynthesis.speak(u);
+}
+
+function goNext(){
+  if(reviewMode){
+    if(reviewOrder.length === 0){
+      finishReview();
+      return;
+    }
+    loadCard();
+    return;
+  }
+  idx = (idx+1) % order.length;
+  if(idx === 0){ order = shuffle(order); }
+  loadCard();
+}
+
+let autoAdvanceTimeout = null;
+
+function showResult(isCorrect, userTyped){
+  revealPanel.classList.add('show');
+  answered = true;
+  answerInput.disabled = true;
+  clearTimeout(autoAdvanceTimeout);
+
+  const item = currentItem();
+
+  if(mode === 'en2bg'){
+    const { primary, extra } = splitMeaning(item);
+    answerWordEl.textContent = primary + (extra ? ' \u2014 ' + extra : '');
+  } else {
+    answerWordEl.textContent = item.word;
+  }
+
+  stampRow.innerHTML = '';
+  const stamp = document.createElement('div');
+  stamp.className = 'stamp ' + (isCorrect ? 'correct' : 'wrong');
+  stamp.textContent = isCorrect ? 'Точно' : 'Грешно';
+  stampRow.appendChild(stamp);
+
+  if(isCorrect){
+    score++;
+    scoreLabel.textContent = score + ' верни';
+    yourAnswerLine.textContent = '';
+    removeMistake(item);
+    if(reviewMode){
+      const ri = reviewOrder.indexOf(item);
+      if(ri !== -1) reviewOrder.splice(ri, 1);
+      updateMistakeUI();
+    }
+  } else if(userTyped){
+    yourAnswerLine.innerHTML = 'написа: <span>' + userTyped + '</span>';
+    addMistake(item);
+    if(reviewMode){
+      const ri = reviewOrder.indexOf(item);
+      if(ri !== -1){ reviewOrder.splice(ri, 1); reviewOrder.push(item); }
+      updateMistakeUI();
+    }
+  } else {
+    yourAnswerLine.textContent = '';
+    addMistake(item);
+    if(reviewMode){
+      const ri = reviewOrder.indexOf(item);
+      if(ri !== -1){ reviewOrder.splice(ri, 1); reviewOrder.push(item); }
+      updateMistakeUI();
+    }
+  }
+
+  if(isCorrect){
+    // read the English word aloud, then move on automatically once done
+    speak(item.word, () => {
+      autoAdvanceTimeout = setTimeout(goNext, 550);
+    });
+  } else {
+    speak(item.word);
+  }
+}
+
+function isAnswerCorrect(typed){
+  const typedNorm = normalize(typed);
+  if(!typedNorm) return false;
+  return getOptions().some(opt => normalize(opt) === typedNorm);
+}
+
+document.getElementById('check-btn').addEventListener('click', ()=>{
+  if(answered) return;
+  const typed = answerInput.value;
+  showResult(isAnswerCorrect(typed), typed.trim());
+});
+
+document.getElementById('reveal-btn').addEventListener('click', ()=>{
+  if(answered) return;
+  showResult(false, answerInput.value.trim());
+});
+
+document.getElementById('next-btn').addEventListener('click', goNext);
+
+speakBtn.addEventListener('click', ()=>{
+  speak(currentItem().word);
+});
+
+promptSpeakBtn.addEventListener('click', ()=>{
+  speak(currentItem().word);
+});
+
+function setMode(newMode){
+  if(mode === newMode) return;
+  mode = newMode;
+  dirBg2enBtn.classList.toggle('active', mode === 'bg2en');
+  dirEn2bgBtn.classList.toggle('active', mode === 'en2bg');
+  clearTimeout(autoAdvanceTimeout);
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  loadCard();
+}
+
+dirBg2enBtn.addEventListener('click', ()=> setMode('bg2en'));
+dirEn2bgBtn.addEventListener('click', ()=> setMode('en2bg'));
+
+function updateDeckButtons(){
+  deckAllBtn.classList.toggle('active', practiceMode === 'all');
+  deckRecentBtn.classList.toggle('active', practiceMode === 'recent');
+  categoryButtons.forEach((btn, name) => {
+    btn.classList.toggle('active', practiceMode === name);
+  });
+}
+
+/* Rebuild the category buttons from categoryOrder/categories, one per extra sheet
+   in the xlsx. Existing buttons for sheets that disappeared are removed; buttons
+   for new sheets are appended, in sheet order, after "Последно добавени". */
+function renderDeckButtons(){
+  for(const [name, btn] of categoryButtons){
+    if(!categoryOrder.includes(name)){
+      btn.remove();
+      categoryButtons.delete(name);
+    }
+  }
+  categoryOrder.forEach(name => {
+    if(categoryButtons.has(name)) return;
+    const btn = document.createElement('button');
+    btn.className = 'dir-btn';
+    btn.type = 'button';
+    btn.textContent = name;
+    btn.addEventListener('click', () => setPracticeMode(name));
+    deckToggle.appendChild(btn);
+    categoryButtons.set(name, btn);
+  });
+  if(!categoryOrder.includes(practiceMode) && practiceMode !== 'all' && practiceMode !== 'recent'){
+    practiceMode = 'all';
+    currentDeck = WORDS;
+  }
+  updateDeckButtons();
+}
+
+function setPracticeMode(newMode){
+  const deck = deckFor(newMode);
+  if(!deck || !deck.length) return;
+  if(newMode === practiceMode) return;
+  practiceMode = newMode;
+  currentDeck = deck;
+  updateDeckButtons();
+  clearTimeout(autoAdvanceTimeout);
+  if('speechSynthesis' in window) window.speechSynthesis.cancel();
+  if(reviewMode){
+    reviewMode = false;
+    updateMistakeUI();
+  }
+  idx = 0;
+  order = shuffle(currentDeck.map((_, i) => i));
+  loadCard();
+}
+
+deckAllBtn.addEventListener('click', ()=> setPracticeMode('all'));
+deckRecentBtn.addEventListener('click', ()=> setPracticeMode('recent'));
+
+reviewBtn.addEventListener('click', ()=>{
+  if(reviewMode){
+    exitReview();
+  } else if(mistakeQueue.length >= MISTAKE_LIMIT){
+    startReview();
+  }
+});
+
+/* ---- xlsx export / import / remote sync, so new words and sheets are picked up
+   automatically. Any sheet in the workbook other than the main word list and the
+   instructions sheet becomes its own practice category with a matching button. ---- */
+const dataStatus = document.getElementById('data-status');
+const downloadBtn = document.getElementById('download-xlsx-btn');
+const uploadInput = document.getElementById('upload-xlsx-input');
+
+function setDataStatus(text){
+  dataStatus.textContent = text;
+}
+
+const IGNORE_SHEET_NAMES = new Set(['инструкции', 'instructions', 'readme', 'read me']);
+const MAIN_SHEET_NAMES = new Set(['думи', 'words', 'word list', 'main']);
+
+function splitList(s){
+  return String(s || '').split(/;|\|/).map(x => x.trim()).filter(Boolean);
+}
+
+function rowsToWords(rows){
+  return rows.map(r => {
+    const word = String(r.Word ?? r.word ?? '').trim();
+    const meaning = String(r.Meaning ?? r.meaning ?? '').trim();
+    if(!word || !meaning) return null;
+
+    const entry = { word, meaning };
+
+    const example = String(r.Example ?? r.example ?? '').trim();
+    if(example) entry.example = example;
+
+    const alternates = splitList(r.Alternates ?? r.alternates);
+    if(alternates.length) entry.alternates = alternates;
+
+    const rawAnswers = splitList(r.Answers ?? r.answers);
+    const curated = rawAnswers.length > 0;
+    const answers = curated
+      ? rawAnswers
+      : meaning.split(/\s*\/\s*|\s*;\s*|\s*,\s*/).map(s => s.trim()).filter(Boolean);
+    if(answers.length) entry.answers = answers;
+    if(curated) entry._curatedAnswers = true;
+
+    return entry;
+  }).filter(Boolean);
+}
+
+/* Reads a SheetJS workbook into { words, categories, categoryOrder, mainName }.
+   The main sheet (by name, or the first non-instructions sheet) becomes WORDS;
+   every other non-instructions sheet becomes a category, in sheet order. */
+function parseWorkbook(wb){
+  const sheetNames = wb.SheetNames || [];
+  const mainName = sheetNames.find(n => MAIN_SHEET_NAMES.has(n.trim().toLowerCase()))
+    || sheetNames.find(n => !IGNORE_SHEET_NAMES.has(n.trim().toLowerCase()))
+    || sheetNames[0];
+
+  const words = mainName ? rowsToWords(XLSX.utils.sheet_to_json(wb.Sheets[mainName], { defval: '' })) : [];
+
+  const cats = {};
+  const catOrder = [];
+  sheetNames.forEach(name => {
+    const norm = name.trim().toLowerCase();
+    if(mainName && norm === mainName.trim().toLowerCase()) return;
+    if(IGNORE_SHEET_NAMES.has(norm)) return;
+    const entries = rowsToWords(XLSX.utils.sheet_to_json(wb.Sheets[name], { defval: '' }));
+    if(entries.length){
+      cats[name] = entries;
+      catOrder.push(name);
+    }
+  });
+
+  return { words, categories: cats, categoryOrder: catOrder, mainName };
+}
+
+/* Swaps in a freshly parsed workbook as the live dataset: rebuilds WORDS/categories,
+   the dynamic buttons, resets score/mistakes and reloads the current card. */
+function applyParsedWorkbook(parsed, sourceLabel){
+  if(!parsed.words.length) return false;
+
+  WORDS.length = 0;
+  WORDS.push(...parsed.words);
+  categories = parsed.categories;
+  categoryOrder = parsed.categoryOrder;
+
+  score = 0;
+  scoreLabel.textContent = '0 верни';
+  practiceMode = 'all';
+  currentDeck = WORDS;
+  idx = 0;
+  order = shuffle(currentDeck.map((_, i) => i));
+  mistakeQueue = [];
+  reviewMode = false;
+  updateMistakeUI();
+  renderDeckButtons();
+  loadCard();
+
+  const catSummary = parsed.categoryOrder.map(n => n + ': ' + parsed.categories[n].length + ' думи').join(', ');
+  setDataStatus((sourceLabel ? sourceLabel + ' — ' : '') + 'Зареден речник: ' + parsed.words.length + ' думи.'
+    + (catSummary ? (' ' + catSummary + '.') : ''));
+  return true;
+}
+
+downloadBtn.addEventListener('click', ()=>{
+  if(typeof XLSX === 'undefined'){
+    setDataStatus('Библиотеката за .xlsx не се зареди (нужен е интернет).');
+    return;
+  }
+  const toRows = (list) => list.map(w => ({
+    Word: w.word,
+    Meaning: w.meaning,
+    Example: w.example || '',
+    Alternates: (w.alternates || []).join('; '),
+    Answers: (w.answers || []).join('; ')
+  }));
+  const headers = ['Word','Meaning','Example','Alternates','Answers'];
+  const colWidths = [{wch:26},{wch:34},{wch:46},{wch:22},{wch:30}];
+
+  const usedNames = new Set();
+  function safeSheetName(name){
+    let n = String(name || 'sheet').replace(/[\\\/\?\*\[\]:]/g, ' ').trim() || 'sheet';
+    n = n.slice(0, 31);
+    let unique = n, i = 2;
+    while(usedNames.has(unique.toLowerCase())){
+      const suffix = ' ' + i;
+      unique = n.slice(0, 31 - suffix.length) + suffix;
+      i++;
+    }
+    usedNames.add(unique.toLowerCase());
+    return unique;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(toRows(WORDS), { header: headers });
+  ws['!cols'] = colWidths;
+  XLSX.utils.book_append_sheet(wb, ws, safeSheetName('думи'));
+
+  let summary = WORDS.length + ' думи';
+  categoryOrder.forEach(name => {
+    const list = categories[name] || [];
+    if(!list.length) return;
+    const catWs = XLSX.utils.json_to_sheet(toRows(list), { header: headers });
+    catWs['!cols'] = colWidths;
+    XLSX.utils.book_append_sheet(wb, catWs, safeSheetName(name));
+    summary += ' и ' + name + ': ' + list.length + ' думи';
+  });
+
+  XLSX.writeFile(wb, 'rechnik.xlsx');
+  setDataStatus('Свален речник с ' + summary + '.');
+});
+
+uploadInput.addEventListener('change', (e)=>{
+  const file = e.target.files && e.target.files[0];
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){
+    setDataStatus('Библиотеката за .xlsx не се зареди (нужен е интернет).');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = (evt)=>{
+    try{
+      const bytes = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(bytes, { type: 'array' });
+      const parsed = parseWorkbook(wb);
+      if(!parsed.words.length){
+        setDataStatus('Файлът няма валидни редове. Нужни са колони "Word" и "Meaning".');
+        return;
+      }
+      applyParsedWorkbook(parsed, 'Качен файл');
+    }catch(err){
+      console.error(err);
+      setDataStatus('Грешка при четене на файла. Провери формата.');
+    } finally {
+      uploadInput.value = '';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+/* ---- auto-sync from GitHub on every load, so editing the shared xlsx there is enough
+   to update everyone's app — no manual re-upload needed. Silently keeps the current
+   (embedded or last-loaded) dataset if the fetch fails or nothing changed. ---- */
+const REMOTE_XLSX_URL = 'https://raw.githubusercontent.com/strahilpeev/DoriEnglish/main/rechnik.xlsx';
+
+function datasetFingerprint(words, cats, catOrder){
+  const wSig = words.length + ':' + (words[0] ? words[0].word : '') + ':' + (words[words.length - 1] ? words[words.length - 1].word : '');
+  const cSig = catOrder.map(n => n + '=' + ((cats[n] || []).length)).join(',');
+  return wSig + '|' + cSig;
+}
+
+function syncFromRemote(){
+  if(typeof XLSX === 'undefined' || typeof fetch === 'undefined') return;
+  const url = REMOTE_XLSX_URL + (REMOTE_XLSX_URL.includes('?') ? '&' : '?') + 'v=' + Date.now();
+  fetch(url, { cache: 'no-store' })
+    .then(res => { if(!res.ok) throw new Error('HTTP ' + res.status); return res.arrayBuffer(); })
+    .then(buf => {
+      const wb = XLSX.read(new Uint8Array(buf), { type: 'array' });
+      const parsed = parseWorkbook(wb);
+      if(!parsed.words.length) return;
+      const currentFp = datasetFingerprint(WORDS, categories, categoryOrder);
+      const newFp = datasetFingerprint(parsed.words, parsed.categories, parsed.categoryOrder);
+      if(currentFp === newFp) return; // unchanged on GitHub — skip to avoid resetting progress
+      applyParsedWorkbook(parsed, 'Обновено от GitHub');
+    })
+    .catch(() => { /* offline, blocked, or file not found yet — keep using the current dataset */ });
+}
+
+/* Block any keystroke that doesn't match the correct word so far, with an error tone */
+answerInput.addEventListener('beforeinput', (e)=>{
+  if(answered){ e.preventDefault(); return; }
+
+  if(e.inputType && e.inputType.startsWith('delete')){
+    return; // always allow corrections/backspace
+  }
+  if(!e.inputType || !e.inputType.startsWith('insert')){
+    return; // let non-text input types (e.g. history) pass through untouched
+  }
+
+  const current = e.target.value;
+  const selStart = e.target.selectionStart ?? current.length;
+  const selEnd = e.target.selectionEnd ?? current.length;
+  const insertText = e.data != null ? e.data : '';
+  const prospective = current.slice(0, selStart) + insertText + current.slice(selEnd);
+  const prospectiveNorm = normalize(prospective);
+
+  const options = getOptions();
+  const isValidPrefix = options.some(opt => normalize(opt).startsWith(prospectiveNorm));
+
+  if(!isValidPrefix){
+    e.preventDefault();
+    playErrorTone();
+    flashInputError();
+  }
+});
+
+/* Block pasting text outright, to keep the letter-by-letter check meaningful */
+answerInput.addEventListener('paste', (e)=>{
+  e.preventDefault();
+  playErrorTone();
+  flashInputError();
+});
+
+/* Once the full correct word (or an accepted alternate) is typed, check automatically */
+answerInput.addEventListener('input', ()=>{
+  if(answered) return;
+  if(isAnswerCorrect(answerInput.value)){
+    showResult(true, answerInput.value.trim());
+  }
+});
+
+answerInput.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    if(!answered){
+      document.getElementById('check-btn').click();
+    } else {
+      clearTimeout(autoAdvanceTimeout);
+      goNext();
+    }
+  }
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'ArrowRight' && answered){
+    clearTimeout(autoAdvanceTimeout);
+    goNext();
+  }
+});
+
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+currentDeck = WORDS;
+order = shuffle(currentDeck.map((_,i)=>i));
+renderDeckButtons();
+loadCard();
+syncFromRemote();
+</script>
+</body>
+</html>
